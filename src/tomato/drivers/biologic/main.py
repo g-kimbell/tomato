@@ -134,11 +134,12 @@ def get_data(
             logger.debug("Attempt %d failed: %s", attempt + 1, e)
             if attempt == max_connect_attempts - 1:
                 logger.critical(
-                    "Failed to start job after %d attempts, last error: %s",
+                    "Failed to get data after %d attempts, last error: %s",
                     max_connect_attempts,
                     e,
                 )
                 raise e
+            time.sleep(10)
     dt = datetime.now(timezone.utc)
     nrows = data["technique"]["data_rows"]
     elapsed_time = time.perf_counter() - time0
@@ -150,6 +151,9 @@ def get_data(
         attempt + 1,
         elapsed_time,
     )
+    if nrows == 100: # the channel could be recording too much
+        logger.warning("Channel '%s:%s' may be recording too much data. Sleeping 60 seconds.", address, channel)
+        time.sleep(60)
     return dt.timestamp(), nrows, data
 
 
@@ -240,6 +244,7 @@ def start_job(
                     e,
                 )
                 raise e
+            time.sleep(10)
     dt = datetime.now(timezone.utc)
     logger.info("run started at '%s'", dt)
     return dt.timestamp()
@@ -293,11 +298,12 @@ def stop_job(
             logger.debug("Attempt %d failed: %s", attempt + 1, e)
             if attempt == max_connect_attempts - 1:
                 logger.critical(
-                    "Failed to start job after %d attempts, last error: %s",
+                    "Failed to stop job after %d attempts, last error: %s",
                     max_connect_attempts,
                     e,
                 )
                 raise e
+            time.sleep(10)
 
     if jobqueue:
         jobqueue.close()
